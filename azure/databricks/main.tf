@@ -55,6 +55,8 @@ resource "random_integer" "ri" {
   max = 99999
 }
 
+data "azurerm_client_config" "current" {}
+
 resource "azurerm_resource_group" "poc_rg" {
   name     = "${var.project_name}-poc-rg"
   location = "${var.project_location}"
@@ -137,7 +139,7 @@ resource "azurerm_storage_account" "poc_storage_account" {
   account_tier             = "Standard"
   account_replication_type = "LRS"
   access_tier              = "Hot"
-  is_hns_enabled           = true
+  is_hns_enabled           = false  # Enable compatibility with Blob APIs
 
   network_rules {
     virtual_network_subnet_ids = ["${azurerm_subnet.adb_public_subnet.id}", "${azurerm_subnet.adb_private_subnet.id}"]
@@ -145,20 +147,11 @@ resource "azurerm_storage_account" "poc_storage_account" {
   }
 }
 
-# resource "azurerm_storage_container" "poc_storage_container" {
-#   name                  = "${var.project_name}"
-#   resource_group_name   = "${azurerm_resource_group.poc_rg.name}"
-#   storage_account_name  = "${azurerm_storage_account.poc_storage_account.name}"
-#   container_access_type = "private"
-# }
-
 #
 # Store the Cosmos DB and Storage Account secrets in Azure Key Vault.
 #
-data "azurerm_client_config" "current" {}
-
 resource "azurerm_key_vault" "poc_key_vault" {
-  name                = "${var.project_name}pocvault"
+  name                = "${var.project_name}pocvault${random_integer.ri.result}"
   location            = "${azurerm_resource_group.poc_rg.location}"
   resource_group_name = "${azurerm_resource_group.poc_rg.name}"
   tenant_id           = "${data.azurerm_client_config.current.tenant_id}"
@@ -172,8 +165,7 @@ resource "azurerm_key_vault" "poc_key_vault" {
     object_id = "${data.azurerm_client_config.current.service_principal_object_id}"
 
     secret_permissions = [
-      #  "backup", "delete", "get", "list", "purge", "recover", "restore", "set"
-      "get", "set", "delete"
+      "get", "set", "delete", "list", "purge"
     ]
   }
 
