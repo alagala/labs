@@ -1,2 +1,7 @@
 **/.ipynb_checkpoints/
 **/keys/*
+
+# Terraform artifacts
+**/.terraform
+**/*tfstate*
+**/crash.log
