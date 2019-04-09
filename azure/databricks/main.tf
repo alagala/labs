@@ -151,7 +151,7 @@ resource "azurerm_storage_account" "poc_storage_account" {
 # Store the Cosmos DB and Storage Account secrets in Azure Key Vault.
 #
 resource "azurerm_key_vault" "poc_key_vault" {
-  name                = "${var.project_name}pocvault${random_integer.ri.result}"
+  name                = "${var.project_name}pocvault"
   location            = "${azurerm_resource_group.poc_rg.location}"
   resource_group_name = "${azurerm_resource_group.poc_rg.name}"
   tenant_id           = "${data.azurerm_client_config.current.tenant_id}"
