@@ -13,8 +13,8 @@ The diagram below shows the architecture of the solution.
 
 1. Microsoft Azure subscription
 2. A CI server to run Terraform non-interactively, with a Service Principal (which is an application within Azure Active Directory); or
-3. If you plan to run Terraform from your local machine:
-   - The Azure CLI
+3. If you plan to run Terraform from your local machine, install:
+   - The [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
    - [Terraform](https://www.terraform.io)
 
 ## Create a Service Principal on your local machine using the Azure CLI
@@ -65,6 +65,7 @@ vnet_address_space        = <ADDRESS_SPACE_OF_THE_VNET_TO_BE_CREATED>
 adb_public_subnet_prefix  = <DATABRICKS_PUBLIC_SUBNET_ADDRESS_RANGE>
 adb_private_subnet_prefix = <DATABRICKS_PRIVATE_SUBNET_ADDRESS_RANGE>
 ```
+   > **Note**: ensure that the value of the project name is maximum 16 characters in length, othwerwise some resources will not be created properly (as their names will exceed the maximum allowed length).
 
 Run Terraform:
 ```shell
@@ -80,12 +81,12 @@ When the execution of the Terraform plan has completed (expect about 10-15 minut
 3. You should see a resource group named `<PROJECT_NAME>-poc-rg` (eg. `datainsights-poc-rg`).
 
 4. Click on it and observe that the following services have been created:
-- `<PROJECT_NAME>-poc-vnet`: the virtual network (with subnets) where Azure Databricks service components and Spark workers are deployed.
-- `<PROJECT_NAME>-poc-nsg`:	the network security group (created by Azure Databricks) associated to the subnets.
-- `<PROJECT_NAME>-poc-workspace`: the Azure Databricks workspace, which we will utilize to start our Spark clusters and run our sample application.
-- `<PROJECT_NAME>poc<#>`: the Azure Cosmos DB account, where we will host the database of our sample application.
-- `<PROJECT_NAME>poc<#>`: the Azure Data Lake Storage account (Gen2), that the sample application will read the data from and write the data to.
-- `<PROJECT_NAME>pocvault<#>`: the Azure Key vault	service that will store the secrets our application uses to access the Cosmos DB and the Storage accounts.
+   - `<PROJECT_NAME>poc<#>`: the **Azure Cosmos DB account**, where we will host the database of our sample application.
+   - `<PROJECT_NAME>poc<#>`: the Azure Data Lake **Storage account** (Gen2), that the sample application will read the data from and write the data to.
+   - `<PROJECT_NAME>poc<#>`: the Azure **Key vault** service that will store the secrets our application uses to access the Cosmos DB and the Storage accounts.
+   - `<PROJECT_NAME>-poc-vnet`: the **virtual network** (with subnets) where Azure Databricks service components and Spark workers are deployed.
+   - `<PROJECT_NAME>-poc-nsg`: the **network security group** (created by Azure Databricks) associated to the subnets.
+   - `<PROJECT_NAME>-poc-workspace`: the **Azure Databricks** workspace, which we will utilize to start our Spark clusters and run our sample application.
 
 ## Copy the Terraform output variables
 
@@ -98,6 +99,58 @@ You can also reproduce the values with the following commands:
 $ terraform output key_vault_uri
 $ terraform output key_vault_id
 ```
+
+## Create a container in the Azure Storage account
+
+Download a sample text file and save it into Azure blob storage.
+
+1. Download this sample file text file [from GitHub](https://raw.githubusercontent.com/alagala/labs/master/azure/databricks/notebooks/data/sample.txt) onto your local computer. Right-click and save as to save the raw file locally.
+
+2. Return to the [Azure portal](https://portal.azure.com).
+
+3. Navigate to the newly provisioned Azure Storage account (`<PROJECT_NAME>poc<#>`), then:
+   - Select **Blobs** on the left-hand menu.
+   - Select **+ Container** to create a new empty container.
+   - Provide a **Name** for the container (such as `datainsights`), that we will refer to as `<CONTAINER_NAME>` in the Azure Databricks notebook we will setup.
+   - Select **Private (no anonymous access)** access level.
+      
+      ![Create a storage container in the Blob Storage account](media/blob-create-container.png 'Create storage container')
+
+   - Click on the **OK** button.
+
+## Create the Cosmos DB database
+
+1. Return to the [Azure portal](https://portal.azure.com).
+
+2. Navigate to the newly provisioned Azure Cosmos DB account (`<PROJECT_NAME>poc<#>`), then select **Firewalls and virtual networks** on the left-hand menu.
+
+3. Click on the **Add my current IP** link and then select the **Save** button.
+
+   ![Add your client IP address to the Storage account](media/cosmos-db-add-client-ip-address.png 'Add client IP address to storage')
+
+   > **Note**: Please review the the client IP address that is displayed by the Portal and validate if this is your correct public IP address. If not, explicitly enter your public IP address in the textbox under the link.
+
+   > **Important**: You may have to wait a couple of minutes before proceeding with the next instructions, to ensure that the firewall rules are indeed updated and have taken effect. If not, you may experience an authorization error when creating the Cosmos DB database.
+
+4. Select **Data Explorer** on the left-hand menu.
+
+   ![Data Explorer is selected within the left-hand menu](media/cosmos-db-data-explorer-link.png 'Select Data Explorer')
+
+5. Select **New Collection** in the top toolbar.
+
+   ![The New Collection button is highlighted on the top toolbar](media/new-collection-button.png 'New Collection')
+
+6. In the **Add Collection** blade, configure the following:
+
+   - **Database id**: Select **Create new**, then provide an ID for the database (such as `WordCount`), that we will refer to as `<DATABASE_ID>` in the Azure Databricks notebook we will setup.
+   - **Provision database throughput**: Unchecked.
+   - **Collection id**: Enter "words".
+   - **Partition key**: Enter "/word".
+   - **Throughput**: Enter 1000.
+
+   ![The Add Collection blade is displayed, with the previously mentioned settings entered into the appropriate fields.](media/cosmos-db-add-collection-blade.png 'Add Collection blade')
+
+7. Click on the **OK** button to create the collection.
 
 ## Configure Azure Databricks to access Key Vault
 
@@ -122,60 +175,6 @@ Connect to your Azure Databricks workspace and configure Azure Databricks secret
 6. Select **Create**.
 
 After a moment, you will see a dialog verifying that the secret scope has been created.
-
-## Create a container in the Azure Storage account
-
-Download a sample text file and save it into Azure blob storage.
-
-1. Download this sample file text file [from GitHub](https://raw.githubusercontent.com/alagala/labs/master/azure/databricks/notebooks/data/sample.txt) onto your local computer. Right-click and save as to save the raw file locally.
-
-2. Return to the [Azure portal](https://portal.azure.com).
-
-3. Navigate to the newly provisioned Azure Storage account, then:
-   - Select **Blobs** on the left-hand menu.
-   - Select **+ Container** to create a new empty container.
-   - Provide a **Name** for the container (such as `datainsights`), that we will refer to as `<CONTAINER_NAME>` in the Azure Databricks notebook we will setup.
-   - Select **Private (no anonymous access)** access level.
-      
-      ![Create a storage container in the Blob Storage account](media/blob-create-container.png 'Create storage container')
-
-   - Click on the **OK** button. Once the container is created, select the container name.
-   - Select the **Upload** button.
-   - On the **Files** page, select the **Folder icon** to browse and select the sample file `sample.txt` for upload.
-   - Select **Upload** to upload the file.
-
-## Create the Cosmos DB database
-
-1. Return to the [Azure portal](https://portal.azure.com).
-
-2. Navigate to the newly provisioned Azure Cosmos DB account, then select **Firewalls and virtual networks** on the left-hand menu.
-
-3. Click on the **Add my current IP** link and then select the **Save** button.
-
-   > **Note**: Please review the the client IP address that is displayed by the Portal and validate if this is your correct public IP address. If not, explicitly enter your public IP address in the textbox under the link.
-
-   > **Important**: You may have to wait a couple of minutes before proceeding with the next instructions, to ensure that the firewall rules are indeed updated and have taken effect. If not, you may experience an authorization error when creating the Cosmos DB database.
-      
-   ![Add your client IP address to the Storage account](media/cosmos-db-add-client-ip-address.png 'Add client IP address to storage')
-
-4. Select **Data Explorer** on the left-hand menu.
-
-   ![Data Explorer is selected within the left-hand menu](media/cosmos-db-data-explorer-link.png 'Select Data Explorer')
-
-5. Select **New Collection** in the top toolbar.
-
-   ![The New Collection button is highlighted on the top toolbar](media/new-collection-button.png 'New Collection')
-
-6. In the **Add Collection** blade, configure the following:
-
-   - **Database id**: Select **Create new**, then provide an ID for the database (such as `WordCount`), that we will refer to as `<DATABASE_ID>` in the Azure Databricks notebook we will setup.
-   - **Provision database throughput**: Unchecked.
-   - **Collection id**: Enter "words".
-   - **Partition key**: Enter "/word".
-   - **Throughput**: Enter 1000.
-
-   ![The Add Collection blade is displayed, with the previously mentioned settings entered into the appropriate fields.](media/cosmos-db-add-collection-blade.png 'Add Collection blade')
-
 
 # Run the sample Spark application
 
@@ -207,7 +206,9 @@ Download a sample text file and save it into Azure blob storage.
 
    ![The Create Cluster screen is displayed, with the values specified above entered into the appropriate fields.](media/databricks-create-new-cluster.png 'Create a new Databricks cluster')
 
-4. Select **Create Cluster**. It will take 3-5 minutes for the cluster to be created and started.
+4. Select **Create Cluster**.
+
+5. Wait for the cluster to be running, before proceeding to the next section. It will take **3-5 minutes** for the cluster to be created and started.
 
 ## Install the Azure Cosmos DB Spark Connector
 
