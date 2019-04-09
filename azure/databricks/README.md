@@ -3,9 +3,22 @@ This guide will help you spin up an environment to test the integration between 
 
 The environment is created by using Terraform, and a notebook is provided to showcase a sample Spark application that count words from a text file stored in Azure Data Lake Storage and writes the output to Azure Cosmos DB (exposed through Cassandra APIs).
 
-The diagram below shows the architecture of the solution.
+The diagram below shows the logical architecture of the solution.
+   
+   ![Logical architecture](media/architecture-logical.png 'Logical architecture')
 
-> **TODO**: insert architecture diagram. 
+Azure Databricks data plane resources are deployed in a virtual network (sometimes called [VNet injection](https://docs.azuredatabricks.net/administration-guide/cloud-configurations/azure/vnet-inject.html)), enabling you to:
+   - Connect Azure Databricks to other Azure services (such as Azure Storage) in a more secure manner using service endpoints.
+   - Connect to on-premises data sources for use with Azure Databricks, taking advantage of user-defined routes.
+   - Connect Azure Databricks to a network virtual appliance to inspect all outbound traffic and take actions according to allow and deny rules.
+   - Configure Azure Databricks to use custom DNS.
+   - Configure network security group (NSG) rules to specify egress traffic restrictions.
+
+Deploying Azure Databricks data plane resources in a virtual network also lets you take advantage of flexible CIDR ranges (anywhere between /16-/24 for the virtual network and between /18-/26 for the subnets).
+
+The following pictures illustrated the physical deployment of the solution.
+
+   ![Physical architecture](media/architecture-physical.png 'Physical architecture')
 
 # Run Terraform and setup the environment
 
