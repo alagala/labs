@@ -5,7 +5,7 @@ The environment is created by using Terraform, and a notebook is provided to sho
 
 The diagram below shows the logical architecture of the solution.
    
-   <img src="media/architecture-logical.png" alt="Logical architecture" width="40%"></img>
+   <img src="media/architecture-logical.png" alt="Logical architecture" width="60%"></img>
 
 Azure Databricks data plane resources are deployed in a virtual network (sometimes called [VNet injection](https://docs.azuredatabricks.net/administration-guide/cloud-configurations/azure/vnet-inject.html)), enabling you to:
    - Connect Azure Databricks to other Azure services (such as Azure Storage) in a more secure manner using service endpoints.
