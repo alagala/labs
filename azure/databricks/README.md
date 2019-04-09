@@ -260,7 +260,15 @@ Follow the instructions below to download the notebook contained in this reposit
 
 ## Explore the data in Cosmos DB
 
-> TODO
+1. Return to the [Azure portal](https://portal.azure.com).
+
+2. Navigate to the Azure Cosmos DB account (`<PROJECT_NAME>poc<#>`), then select **Data Explorer** on the left-hand menu.
+
+3. Expand the database and collection you created earlier, and click on **Documents**.
+
+   ![View the documents stored in Cosmos DB](media/cosmos-db-data-explorer-view.png 'Select Documents')
+
+4. You should be able to see the list of word counts stored in Cosmos DB by Azure Databricks. Selecting any of the documents will display the detailed properties.
 
 # Cleanup the allocated resources
 
