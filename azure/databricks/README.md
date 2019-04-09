@@ -1,4 +1,5 @@
 # Azure Databricks integration with Cosmos DB: hands-on lab
+
 This guide will help you spin up an environment to test the integration between Azure Databricks, Azure Data Lake Storage and Azure Cosmos DB.
 
 The environment is created by using Terraform, and a notebook is provided to showcase a sample Spark application that count words from a text file stored in Azure Data Lake Storage and writes the output to Azure Cosmos DB (exposed through Cassandra APIs).
@@ -16,9 +17,9 @@ Azure Databricks data plane resources are deployed in a virtual network (sometim
 
 Deploying Azure Databricks data plane resources in a virtual network also lets you take advantage of flexible CIDR ranges (anywhere between /16-/24 for the virtual network and between /18-/26 for the subnets).
 
-The following pictures illustrated the physical deployment of the solution.
+The following pictures illustrates the deployment of the solution.
 
-   ![Physical architecture](media/architecture-physical.png 'Physical architecture')
+   ![Physical architecture](media/architecture-deployment.png 'Deployment architecture')
 
 # Run Terraform and setup the environment
 
