@@ -136,7 +136,7 @@ resource "azurerm_storage_account" "poc_storage_account" {
   resource_group_name      = "${azurerm_resource_group.poc_rg.name}"
   location                 = "${azurerm_resource_group.poc_rg.location}"
   account_kind             = "StorageV2"
-  account_tier             = "Standard"
+  account_tier             = "Premium"
   account_replication_type = "LRS"
   access_tier              = "Hot"
   is_hns_enabled           = false  # Enable compatibility with Blob APIs
