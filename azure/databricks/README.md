@@ -54,10 +54,15 @@ We can now create the Service Principal which will have permissions to manage re
 $ az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/SUBSCRIPTION_ID"
 ```
 
-This command will output a few values that must be mapped to the Terraform variables:
+This command will output a few values that must be mapped to the Terraform variables. Take note of them because you will need them in the following section:
 - `appId` is the `client_id`
 - `password` is the `client_secret`
 - `tenant` is the `tenant_id`
+
+Finally, since we're logged into the Azure CLI as a Service Principal we recommend logging out of the Azure CLI:
+```shell
+$ az logout
+```
 
 ## Configure the Service Principal in Terraform
 
