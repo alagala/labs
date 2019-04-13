@@ -119,24 +119,6 @@ $ terraform output key_vault_uri
 $ terraform output key_vault_id
 ```
 
-## Create a container in the Azure Storage account
-
-Download a sample text file and save it into Azure blob storage.
-
-1. Download this sample file text file [from GitHub](https://raw.githubusercontent.com/alagala/labs/master/azure/databricks/notebooks/data/sample.txt) onto your local computer. Right-click and save as to save the raw file locally.
-
-2. Return to the [Azure portal](https://portal.azure.com).
-
-3. Navigate to the newly provisioned Azure Storage account (`<PROJECT_NAME>poc<#>`), then:
-   - Select **Blobs** on the left-hand menu.
-   - Select **+ Container** to create a new empty container.
-   - Provide a **Name** for the container (such as `datainsights`), that we will refer to as `<CONTAINER_NAME>` in the Azure Databricks notebook we will setup.
-   - Select **Private (no anonymous access)** access level.
-      
-      ![Create a storage container in the Blob Storage account](media/blob-create-container.png 'Create storage container')
-
-   - Click on the **OK** button.
-
 ## Create the Cosmos DB database
 
 1. Return to the [Azure portal](https://portal.azure.com).

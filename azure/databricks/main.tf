@@ -53,7 +53,7 @@ provider "azurerm" {
 resource "random_integer" "ri" {
   min = 10000
   max = 99999
-}
+}	
 
 data "azurerm_client_config" "current" {}
 
@@ -136,10 +136,10 @@ resource "azurerm_storage_account" "poc_storage_account" {
   resource_group_name      = "${azurerm_resource_group.poc_rg.name}"
   location                 = "${azurerm_resource_group.poc_rg.location}"
   account_kind             = "StorageV2"
-  account_tier             = "Premium"
+  account_tier             = "Standard"
   account_replication_type = "LRS"
   access_tier              = "Hot"
-  is_hns_enabled           = false  # Enable compatibility with Blob APIs
+  is_hns_enabled           = true
 
   network_rules {
     virtual_network_subnet_ids = ["${azurerm_subnet.adb_public_subnet.id}", "${azurerm_subnet.adb_private_subnet.id}"]
@@ -165,7 +165,7 @@ resource "azurerm_key_vault" "poc_key_vault" {
     object_id = "${data.azurerm_client_config.current.service_principal_object_id}"
 
     secret_permissions = [
-      "get", "set", "delete", "list", "purge"
+      "get", "set", "delete"
     ]
   }
 
