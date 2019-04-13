@@ -278,3 +278,6 @@ Run the following Terraform command to cleanup all allocated resources and destr
 ```shell
 $ terraform destroy
 ```
+
+   > **Note**: at the moment, [an issue](https://github.com/terraform-providers/terraform-provider-azurerm/issues/3226) with the Terraform provider for Azure Resource Manager prevents the Azure Data Lake Storage account to be destroyed.
+   > *Hence, for the time being, it's best to delete the resource group from the [Azure portal](https://portal.azure.com).*
