@@ -18,13 +18,79 @@ variable "adb_private_subnet_prefix" {
   default = "10.0.2.0/24"
 }
 
+# IP addresses to whitelist when setting up the network security group
+# for Azure Databricks.
+variable adb_control_plane_ip_addresses {
+  type = "map"
+  default = {
+    "australiacentral"   = "13.70.105.50/32"
+    "australiacentral2"  = "13.70.105.50/32"
+    "australiaeast"      = "13.70.105.50/32"
+    "australiasoutheast" = "13.70.105.50/32"
+    "canadacentral"      = "40.85.223.25/32"
+    "canadaeast"         = "40.85.223.25/32"
+    "centralindia"       = "104.211.101.14/32"
+    "centralus"          = "23.101.152.95/32"
+    "eastasia"           = "52.187.0.85/32"
+    "eastus"             = "23.101.152.95/32"
+    "eastus2"            = "23.101.152.95/32"
+    "eastus2euap"        = "23.101.152.95/32"
+    "japaneast"          = "13.78.19.235/32"
+    "japanwest"          = "13.78.19.235/32"
+    "northcentralus"     = "23.101.152.95/32"
+    "northeurope"        = "23.100.0.135/32"
+    "southcentralus"     = "40.83.178.242/32"
+    "southeastasia"      = "52.187.0.85/32"
+    "southindia"         = "104.211.101.14/32"
+    "uksouth"            = "51.140.203.27/32"
+    "ukwest"             = "51.140.203.27/32"
+    "westcentralus"      = "40.83.178.242/32"
+    "westeurope"         = "23.100.0.135/32"
+    "westindia"          = "104.211.101.14/32"
+    "westus"             = "40.83.178.242/32"
+    "westus2"            = "40.83.178.242/32"
+  }
+}
+
+variable adb_webapp_ip_addresses {
+  type = "map"
+  default = {
+    "australiacentral"   = "13.75.218.172/32"
+    "australiacentral2"  = "13.75.218.172/32"
+    "australiaeast"      = "13.75.218.172/32"
+    "australiasoutheast" = "13.75.218.172/32"
+    "canadacentral"      = "13.71.184.74/32"
+    "canadaeast"         = "13.71.184.74/32"
+    "centralindia"       = "104.211.89.81/32"
+    "centralus"          = "40.70.58.221/32"
+    "eastasia"           = "52.187.145.107/32"
+    "eastus"             = "40.70.58.221/32"
+    "eastus2"            = "40.70.58.221/32"
+    "eastus2euap"        = "40.70.58.221/32"
+    "japaneast"          = "52.246.160.72/32"
+    "japanwest"          = "52.246.160.72/32"
+    "northcentralus"     = "40.70.58.221/32"
+    "northeurope"        = "52.232.19.246/32"
+    "southcentralus"     = "40.118.174.12/32"
+    "southeastasia"      = "52.187.145.107/32"
+    "southindia"         = "104.211.89.81/32"
+    "uksouth"            = "51.140.204.4/32"
+    "ukwest"             = "51.140.204.4/32"
+    "westcentralus"      = "40.118.174.12/32"
+    "westeurope"         = "52.232.19.246/32"
+    "westindia"          = "104.211.89.81/32"
+    "westus"             = "40.118.174.12/32"
+    "westus2"            = "40.118.174.12/32"
+  }
+}
+
 locals {
   # Service endpoints to enable in the subnets that are created.
   subnets_service_endpoints = [
     "Microsoft.AzureCosmosDB", "Microsoft.KeyVault", "Microsoft.Storage"
   ]
 
-  # IP Range Filter here is to allow Azure Portal access
+  # IP Range Filter here is to allow Azure Portal access.
   cosmosdb_ip_range_azure = [
     "104.42.195.92/32",
     "40.76.54.131/32",
@@ -73,19 +139,113 @@ resource "azurerm_virtual_network" "poc_vnet" {
 }
 
 resource "azurerm_subnet" "adb_public_subnet" {
-  name                 = "databricks-public-subnet"
-  resource_group_name  = "${azurerm_resource_group.poc_rg.name}"
-  virtual_network_name = "${azurerm_virtual_network.poc_vnet.name}"
-  address_prefix       = "${var.adb_public_subnet_prefix}"
-  service_endpoints    = "${local.subnets_service_endpoints}"
+  name                      = "databricks-public-subnet"
+  resource_group_name       = "${azurerm_resource_group.poc_rg.name}"
+  virtual_network_name      = "${azurerm_virtual_network.poc_vnet.name}"
+  address_prefix            = "${var.adb_public_subnet_prefix}"
+  service_endpoints         = "${local.subnets_service_endpoints}"
 }
 
 resource "azurerm_subnet" "adb_private_subnet" {
-  name                 = "databricks-private-subnet"
-  resource_group_name  = "${azurerm_resource_group.poc_rg.name}"
-  virtual_network_name = "${azurerm_virtual_network.poc_vnet.name}"
-  address_prefix       = "${var.adb_private_subnet_prefix}"
-  service_endpoints    = "${local.subnets_service_endpoints}"
+  name                      = "databricks-private-subnet"
+  resource_group_name       = "${azurerm_resource_group.poc_rg.name}"
+  virtual_network_name      = "${azurerm_virtual_network.poc_vnet.name}"
+  address_prefix            = "${var.adb_private_subnet_prefix}"
+  service_endpoints         = "${local.subnets_service_endpoints}"
+}
+
+resource "azurerm_network_security_group" "adb_nsg" {
+  name                = "${var.project_name}-poc-nsg"
+  location            = "${azurerm_resource_group.poc_rg.location}"
+  resource_group_name = "${azurerm_resource_group.poc_rg.name}"
+  
+  security_rule {
+    name                       = "databricks-worker-to-worker-inbound"
+    description                = "Required for worker nodes communication within a cluster."
+    priority                   = 200
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_address_prefix      = "VirtualNetwork"
+    source_port_range          = "*"
+    destination_address_prefix = "*"
+    destination_port_range     = "*"
+  }
+
+  security_rule {
+    name                       = "databricks-control-plane-ssh"
+    description                = "Required for Databricks control plane management of worker nodes."
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_address_prefix      = "${lookup(var.adb_control_plane_ip_addresses, var.project_location)}"
+    source_port_range          = "*"
+    destination_address_prefix = "*"
+    destination_port_range     = "22"
+  }
+
+  security_rule {
+    name                       = "databricks-control-plane-worker-proxy"
+    description                = "Required for Databricks control plane communication with worker nodes."
+    priority                   = 110
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_address_prefix      = "${lookup(var.adb_control_plane_ip_addresses, var.project_location)}"
+    source_port_range          = "*"
+    destination_address_prefix = "*"
+    destination_port_range     = "5557"
+  }
+
+  security_rule {
+    name                       = "databricks-worker-to-webapp"
+    description                = "Required for workers communication with Databricks Webapp."
+    priority                   = 100
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_address_prefix      = "*"
+    source_port_range          = "*"
+    destination_address_prefix = "${lookup(var.adb_webapp_ip_addresses, var.project_location)}"
+    destination_port_range     = "*"
+  }
+
+  security_rule {
+    name                       = "databricks-worker-to-worker-outbound"
+    description                = "Required for worker nodes communication within a cluster."
+    priority                   = 110
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_address_prefix      = "*"
+    source_port_range          = "*"
+    destination_address_prefix = "VirtualNetwork"
+    destination_port_range     = "*"
+  }
+
+  security_rule {
+    name                       = "databricks-worker-to-any"
+    description                = "Required for worker nodes communication with any destination."
+    priority                   = 120
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_address_prefix      = "*"
+    source_port_range          = "*"
+    destination_address_prefix = "*"
+    destination_port_range     = "*"
+  }
+}
+
+resource "azurerm_subnet_network_security_group_association" "adb_public_subnet_association" {
+  subnet_id                 = "${azurerm_subnet.adb_public_subnet.id}"
+  network_security_group_id = "${azurerm_network_security_group.adb_nsg.id}"
+}
+
+resource "azurerm_subnet_network_security_group_association" "adb_private_subnet_association" {
+  subnet_id                 = "${azurerm_subnet.adb_private_subnet.id}"
+  network_security_group_id = "${azurerm_network_security_group.adb_nsg.id}"
 }
 
 #
@@ -213,6 +373,11 @@ resource "azurerm_template_deployment" "poc_adb_workspace" {
   name                = "adb-arm-poc-template"
   resource_group_name = "${azurerm_resource_group.poc_rg.name}"
 
+  depends_on          = [
+    "azurerm_subnet_network_security_group_association.adb_public_subnet_association",
+    "azurerm_subnet_network_security_group_association.adb_private_subnet_association"
+  ]
+
   template_body = <<DEPLOY
 ${file("arm/vnetinj-template-LRSdbfs.json")}
 DEPLOY
@@ -222,12 +387,8 @@ DEPLOY
     "workspaceName"     = "${var.project_name}-poc-workspace"
     "pricingTier"       = "premium"
     "vnetName"          = "${azurerm_virtual_network.poc_vnet.name}"
-    "vnetCidr"          = "${var.vnet_address_space}"
     "privateSubnetName" = "${azurerm_subnet.adb_private_subnet.name}"
-    "privateSubnetCidr" = "${var.adb_private_subnet_prefix}"
     "publicSubnetName"  = "${azurerm_subnet.adb_public_subnet.name}"
-    "publicSubnetCidr"  = "${var.adb_public_subnet_prefix}"
-    "nsgName"           = "${var.project_name}-poc-nsg"
   }
 
   deployment_mode = "Incremental"
