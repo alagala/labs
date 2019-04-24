@@ -2,7 +2,7 @@
 
 This guide will help you spin up an environment to test the integration between Azure Databricks, Azure Data Lake Storage and Azure Cosmos DB.
 
-The environment is created by using Terraform, and a notebook is provided to showcase a sample Spark application that count words from a text file stored in Azure Data Lake Storage and writes the output to Azure Cosmos DB (exposed through Cassandra APIs).
+The environment is created by using Terraform, and a notebook is provided to showcase a sample Spark application that count words from a text file stored in Azure Data Lake Storage and writes the output to Azure Cosmos DB.
 
 The diagram below shows the logical architecture of the solution.
    
@@ -139,7 +139,7 @@ $ terraform output key_vault_id
 
 5. Select **New Collection** in the top toolbar.
 
-   ![The New Collection button is highlighted on the top toolbar](media/new-collection-button.png 'New Collection')
+   ![The New Collection button is highlighted on the top toolbar](media/cosmos-db-new-collection-button.png 'New Collection')
 
 6. In the **Add Collection** blade, configure the following:
 
@@ -171,7 +171,7 @@ Connect to your Azure Databricks workspace and configure Azure Databricks secret
    - **DNS Name**: the `key_vault_uri` value output by Terraform (for example, <https://datainsightspocvault.vault.azure.net/>).
    - **Resource ID**: the `key_vault_id` value output by Terraform (for example: `/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/datainsights-poc-rg/providers/Microsoft.KeyVault/vaults/datainsightspocvault`).
 
-   ![Create Secret Scope form](media/create-secret-scope.png 'Create Secret Scope')
+   ![Create Secret Scope form](media/databricks-create-secret-scope.png 'Create Secret Scope')
 
 6. Select **Create**.
 
@@ -249,7 +249,7 @@ Follow the instructions below to download the notebook contained in this reposit
 
    ![The Workspace menu is highlighted in the Azure Databricks workspace, and Users is selected with the current user's account selected and highlighted. Import is selected in the user's context menu.](media/databricks-workspace-import.png 'Import files into user workspace')
 
-4. Within the Import Notebooks dialog, select **File** for Import from, and then drag-and-drop the downloaded `dbc` file into the box, or browse to upload it.
+4. Within the Import Notebooks dialog, select **File** for Import from, and then drag-and-drop the downloaded `ipynb` file into the box, or browse to upload it.
 
    ![The Import Notebooks dialog is displayed](media/databricks-import-notebooks.png 'Import Notebooks dialog')
 
