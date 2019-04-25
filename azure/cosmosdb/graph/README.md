@@ -2,7 +2,7 @@
 
 This guide will help you spin up an environment to test graph processing capabilities of Azure Databricks (a fast, easy, and collaborative Apache Spark–based analytics service) and Azure Cosmos DB.
 
-Azure Cosmos DB is the globally distributed, multimodel database service from Microsoft for mission-critical applications. It is a multimodel database and supports document, key-value, graph, and columnar data models. The Azure Cosmos DB Gremlin API is used to store and operate on graph data. Gremlin API supports modeling Graph data and provides APIs to traverse through the graph data.
+Azure Cosmos DB is the globally distributed, multimodel database service from Microsoft for mission-critical applications. It is a multimodel database and supports document, key-value, graph, and columnar data models. The Azure Cosmos DB Gremlin API is used to store and operate on graph data. Gremlin API supports modeling graph data and provides APIs to traverse through the graph data.
 
 The environment is created by using Terraform, and a notebook is provided to showcase a sample Spark application that reads and writes graphs to Azure Cosmos DB.
 
@@ -145,11 +145,11 @@ $ terraform output key_vault_id
 
 6. In the **Add Graph** blade, configure the following:
 
-   - **Database id**: Select **Create new**, then provide an ID for the database (such as `BikeTrips`), that we will refer to as `<DATABASE_ID>` in the Azure Databricks notebook we will setup.
+   - **Database id**: Select **Create new**, then enter `BikeTrips`.
    - **Provision database throughput**: Unchecked.
    - **Graph id**: Enter "trips".
    - **Partition key**: Enter "/station_id".
-   - **Throughput**: Enter 1000.
+   - **Throughput**: Enter 10000.
 
    ![The Add Graph blade is displayed, with the previously mentioned settings entered into the appropriate fields.](media/cosmos-db-add-graph-blade.png 'Add Graph blade')
 
@@ -239,6 +239,31 @@ You have to install the [Azure Cosmos DB Spark Connector](https://github.com/Azu
 
    ![The Install automatically on all clusters box is checked and highlighted on the library dialog.](media/databricks-install-library-on-all-clusters.png 'Install library on all clusters')
 
+## Install the GraphFrames library
+
+You have to install the [GraphFrames library](https://github.com/graphframes/graphframes) on your Databricks cluster: it allows you to write highly expressive graph queries by leveraging the DataFrame API, combined with a new API for motif finding.
+
+1. Navigate to your Azure Databricks workspace in the [Azure portal](https://portal.azure.com/), and select **Launch Workspace** from the overview blade, signing into the workspace with your Azure credentials, if required.
+
+2. Select **Workspace** from the left-hand menu, then select the drop down arrow next to **Shared** and select **Create** and **Library** from the context menus.
+
+   ![The Workspace items is selected in the left-hand menu, and the shared workspace is highlighted. In the Shared workspace context menu, Create and Library are selected.](media/databricks-create-shared-library.png 'Create Shared Library')
+
+3. On the Create Library page, select **Spark** under Library Source, and then select **Search Packages** next to the Coordinates text box.
+
+   ![The Databricks Create Library dialog is displayed, with Maven selected under Library Source and the Search Packages link highlighted.](media/databricks-create-maven-library.png 'Create Library')
+
+4. On the Search Packages dialog, select **Spark Packages** from the source drop down, enter **graphframes** into the search box, and click **Select** next to Artifact Id `0.7.0-spark2.4`.
+
+   ![The Search Packages dialog is displayed, with Spark specified as the source and graphframes entered into the search box. The most recent version of GraphFrames is highlighted.](media/databricks-spark-search-packages.png)
+
+5. Select **Create** to finish installing the library.
+
+6. On the following screen, check the box for **Install automatically on all clusters**, and select **Confirm** when prompted.
+
+   ![The Install automatically on all clusters box is checked and highlighted on the library dialog.](media/databricks-install-library-on-all-clusters.png 'Install library on all clusters')
+
+
 ## Open Azure Databricks and load lab notebooks
 
 Follow the instructions below to download the notebook contained in this repository and upload it to your Azure Databricks workspace.
@@ -260,6 +285,8 @@ Follow the instructions below to download the notebook contained in this reposit
 6. You should now see a notebook named **CosmosDB-Graph-Sample-Application** in your user workspace.
 
 7. In the **CosmosDB-Graph-Sample-Application** notebook, follow the instructions to execute the Spark application.
+
+   > **Note**: It will take 5-7 minutes to persist the graph in Azure Cosmos DB (last step of the notebook).
 
 ## Explore the data in Cosmos DB
 

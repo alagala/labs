@@ -267,7 +267,7 @@ resource "azurerm_cosmosdb_account" "poc_cosmos" {
   }
 
   consistency_policy {
-    consistency_level = "Session"
+    consistency_level = "Eventual"
   }
 
   capabilities {
