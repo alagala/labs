@@ -1,0 +1,8 @@
+twitter.consumer.key={YOUR.TWITTER.CONSUMER.KEY}
+twitter.consumer.secret={YOUR.TWITTER.CONSUMER.SECRET}
+twitter.access.token={YOUR.TWITTER.ACCESS.TOKEN}
+twitter.access.token.secret={YOUR.TWITTER.ACCESS.TOKEN.SECRET}
+
+twitter.track.terms=microsoft,azure
+
+kafka.topic=streaming-poc-tweets
