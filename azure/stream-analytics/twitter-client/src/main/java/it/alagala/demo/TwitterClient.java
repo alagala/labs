@@ -3,7 +3,12 @@ package it.alagala.demo;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -75,11 +80,28 @@ public class TwitterClient {
         // Post each tweet to Azure Event Hubs
         //
         final String topic = config.getProperty(TwitterClient.KAFKA_TOPIC);
+        final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         while (!client.isDone()) {
             try {
                 JSONObject tweet = new JSONObject(queue.take());
-                System.out.println(tweet.getJSONObject("user").getLong("id") + ": " + tweet.getString("text"));
-                publishTweet(producer, topic, tweet);
+                
+                // Rename the property 'user' to 'author' in the JSON returned by Twitter.
+                //
+                tweet.put("author", tweet.getJSONObject("user"));
+                tweet.remove("user");
+                tweet.put("created_at", formatter.format(
+                    TwitterDateParser.parseTwitterUTC(tweet.getString("created_at"))
+                ));
+                
+                // Partition by the author's ID.
+                //
+                Long partitionKey = tweet.getJSONObject("author").getLong("id");
+                
+                System.out.println(partitionKey + ": " + tweet.getString("text"));
+                
+                // Publish the tweet to Azure Event Hubs.
+                //
+                publishTweet(producer, topic, partitionKey, tweet);
             }
             catch (Exception e) {
                 System.out.println(e);
@@ -98,9 +120,9 @@ public class TwitterClient {
         }
     }
 
-    private static void publishTweet(Producer<Long, String> producer, String topic, JSONObject tweet) throws JSONException {
+    private static void publishTweet(Producer<Long, String> producer, String topic, Long partitionKey, JSONObject tweet) throws JSONException {
         final ProducerRecord<Long, String> record = new ProducerRecord<Long,String>(
-            topic, tweet.getJSONObject("user").getLong("id"), tweet.toString()
+            topic, partitionKey, tweet.toString()
         );
 
         producer.send(record, new Callback() {
@@ -157,4 +179,17 @@ public class TwitterClient {
     private static final String TWITTER_SECRET = "twitter.access.token.secret";
     private static final String TWITTER_TRACK_TERMS = "twitter.track.terms";
     private static final String KAFKA_TOPIC = "kafka.topic";
+
+    public static final class TwitterDateParser {
+
+        public static Date parseTwitterUTC(String date) throws ParseException {
+    
+            String twitterFormat="EEE MMM dd HH:mm:ss ZZZ yyyy";
+    
+            SimpleDateFormat sf = new SimpleDateFormat(twitterFormat, Locale.ENGLISH);
+            sf.setLenient(true);
+    
+            return sf.parse(date);
+        }
+    }
 }

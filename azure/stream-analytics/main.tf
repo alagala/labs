@@ -27,6 +27,16 @@ resource "random_integer" "ri" {
   max = 99999
 }
 
+resource "random_string" "password" {
+  length           = 16
+  special          = true
+  override_special = "/@\" "
+}
+
+resource "random_pet" "username" {
+  length = 2
+}
+
 #
 # Configure the resource group.
 #
@@ -52,7 +62,7 @@ resource "azurerm_storage_account" "poc_storage_account" {
   }
 }
 
-resource "azurerm_storage_container" "poc_storage_container" {
+resource "azurerm_storage_container" "poc_storage_container_archive" {
   name                  = "archive"
   resource_group_name   = "${azurerm_resource_group.poc_rg.name}"
   storage_account_name  = "${azurerm_storage_account.poc_storage_account.name}"
@@ -90,10 +100,17 @@ resource "azurerm_eventhub" "poc_eventhub" {
     destination {
       name                 = "EventHubArchive.AzureBlockBlob"
       archive_name_format  = "{Namespace}/{EventHub}/{PartitionId}/{Year}/{Month}/{Day}/{Hour}{Minute}{Second}"
-      blob_container_name  = "${azurerm_storage_container.poc_storage_container.name}"
+      blob_container_name  = "${azurerm_storage_container.poc_storage_container_archive.name}"
       storage_account_id   = "${azurerm_storage_account.poc_storage_account.id}"
     }
   }
+}
+
+resource "azurerm_eventhub_consumer_group" "poc_eh_consumer_group" {
+  name                = "StreamAnalyticsConsumerGroup"
+  namespace_name      = "${azurerm_eventhub_namespace.poc_eh_ns.name}"
+  eventhub_name       = "${azurerm_eventhub.poc_eventhub.name}"
+  resource_group_name = "${azurerm_resource_group.poc_rg.name}"
 }
 
 resource "azurerm_eventhub_authorization_rule" "producer_key" {
@@ -120,66 +137,81 @@ output "eventhub_primary_connection_string" {
   value = "${azurerm_eventhub_authorization_rule.producer_key.primary_connection_string}"
 }
 
-##
-## Store the Cosmos DB and Storage Account secrets in Azure Key Vault.
-##
-#resource "azurerm_key_vault" "poc_key_vault" {
-#  name                = "${var.project_name}poc${random_integer.ri.result}"
-#  location            = "${azurerm_resource_group.poc_rg.location}"
-#  resource_group_name = "${azurerm_resource_group.poc_rg.name}"
-#  tenant_id           = "${data.azurerm_client_config.current.tenant_id}"
 #
-#  sku {
-#    name = "standard"
-#  }
+# Configure the Azure Stream Analytics jobs that will get and process
+# messages from the Azure Event Hubs.
 #
-#  access_policy {
-#    tenant_id = "${data.azurerm_client_config.current.tenant_id}"
-#    object_id = "${data.azurerm_client_config.current.service_principal_object_id}"
+resource "azurerm_stream_analytics_job" "poc_asa_job" {
+  name                                     = "TwitterStoreProjectedFieldsJob"
+  resource_group_name                      = "${azurerm_resource_group.poc_rg.name}"
+  location                                 = "${azurerm_resource_group.poc_rg.location}"
+  compatibility_level                      = "1.1"
+  data_locale                              = "en-US"
+  events_late_arrival_max_delay_in_seconds = 60
+  events_out_of_order_max_delay_in_seconds = 50
+  events_out_of_order_policy               = "Adjust"
+  output_error_policy                      = "Drop"
+  streaming_units                          = 6
+
+  transformation_query = <<QUERY
+    SELECT id, created_at, text AS tweet, source, author.id AS user_id, author.name AS user_name, author.screen_name AS user_screen_name
+    INTO [sqldb-stream-output]
+    FROM [eventhub-stream-input]
+    PARTITION BY PartitionId
+    TIMESTAMP BY created_at
+QUERY
+}
+
+resource "azurerm_stream_analytics_stream_input_eventhub" "poc_asa_eventhub_input" {
+  name                         = "eventhub-stream-input"
+  resource_group_name          = "${azurerm_resource_group.poc_rg.name}"
+  stream_analytics_job_name    = "${azurerm_stream_analytics_job.poc_asa_job.name}"
+  eventhub_consumer_group_name = "${azurerm_eventhub_consumer_group.poc_eh_consumer_group.name}"
+  eventhub_name                = "${azurerm_eventhub.poc_eventhub.name}"
+  servicebus_namespace         = "${azurerm_eventhub_namespace.poc_eh_ns.name}"
+  shared_access_policy_key     = "${azurerm_eventhub_authorization_rule.consumer_key.primary_key}"
+  shared_access_policy_name    = "${azurerm_eventhub_authorization_rule.consumer_key.name}"
+
+  serialization {
+    type     = "Json"
+    encoding = "UTF8"
+  }
+}
+
 #
-#    secret_permissions = [
-#      "get", "set", "delete"
-#    ]
-#  }
+# Configure the Azure SQL Database used to store data.
 #
-#  # network_acls {
-#  #   virtual_network_subnet_ids = ["${azurerm_subnet.adb_public_subnet.id}", "${azurerm_subnet.adb_private_subnet.id}"]
-#  #   bypass                     = "AzureServices"
-#  #   default_action             = "Deny"
-#  # }
-#}
+resource "azurerm_sql_server" "poc_sql_server" {
+  name                         = "sqlserver${random_integer.ri.result}"
+  resource_group_name          = "${azurerm_resource_group.poc_rg.name}"
+  location                     = "${azurerm_resource_group.poc_rg.location}"
+  version                      = "12.0"
+  administrator_login          = "${random_pet.username.id}"
+  administrator_login_password = "${random_string.password.result}"
+}
+
+# The Azure feature 'Allow access to Azure services' can be enabled
+# by setting start_ip_address and end_ip_address to 0.0.0.0.
 #
-#resource "azurerm_key_vault_secret" "secret_cosmos_uri" {
-#  name         = "Cosmos-DB-URI"
-#  value        = "${azurerm_cosmosdb_account.poc_cosmos.endpoint}"
-#  key_vault_id = "${azurerm_key_vault.poc_key_vault.id}"
-#}
-#
-#resource "azurerm_key_vault_secret" "secret_cosmos_key" {
-#  name         = "Cosmos-DB-Key"
-#  value        = "${azurerm_cosmosdb_account.poc_cosmos.primary_master_key}"
-#  key_vault_id = "${azurerm_key_vault.poc_key_vault.id}"
-#}
-#
-#resource "azurerm_key_vault_secret" "secret_storage_name" {
-#  name         = "ADLS-Gen2-Account-Name"
-#  value        = "${azurerm_storage_account.poc_storage_account.name}"
-#  key_vault_id = "${azurerm_key_vault.poc_key_vault.id}"
-#}
-#
-#resource "azurerm_key_vault_secret" "secret_storage_key" {
-#  name         = "ADLS-Gen2-Account-Key"
-#  value        = "${azurerm_storage_account.poc_storage_account.primary_access_key}"
-#  key_vault_id = "${azurerm_key_vault.poc_key_vault.id}"
-#}
-#
-##
-## Define the output variables that are needed in the application.
-##
-#output "key_vault_id" {
-#  value = "${azurerm_key_vault.poc_key_vault.id}"
-#}
-#
-#output "key_vault_uri" {
-#  value = "${azurerm_key_vault.poc_key_vault.vault_uri}"
-#}
+resource "azurerm_sql_firewall_rule" "poc_sql_firewall_rule" {
+  name                = "AllowAccessToAzureServicesRule"
+  resource_group_name = "${azurerm_resource_group.poc_rg.name}"
+  server_name         = "${azurerm_sql_server.poc_sql_server.name}"
+  start_ip_address    = "0.0.0.0"
+  end_ip_address      = "0.0.0.0"
+}
+
+resource "azurerm_sql_database" "poc_sqldb" {
+  name                = "tweetsdb"
+  resource_group_name = "${azurerm_resource_group.poc_rg.name}"
+  location            = "${azurerm_resource_group.poc_rg.location}"
+  server_name         = "${azurerm_sql_server.poc_sql_server.name}"
+}
+
+output "sql_server_login" {
+  value = "${azurerm_sql_server.poc_sql_server.administrator_login}"
+}
+
+output "sql_server_password" {
+  value = "${azurerm_sql_server.poc_sql_server.administrator_login_password}"
+}

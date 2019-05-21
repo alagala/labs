@@ -37,6 +37,7 @@
         <configuration>
           <source>1.8</source>
           <target>1.8</target>
+          <encoding>UTF-8</encoding>
         </configuration>
       </plugin>
       <plugin>
@@ -53,7 +54,6 @@
         <version>1.6.0</version>
         <configuration>
           <mainClass>it.alagala.demo.TwitterClient</mainClass>
-          <workingDirectory>${project.build.outputDirectory}</workingDirectory>
         </configuration>
       </plugin>
     </plugins>
