@@ -139,7 +139,7 @@ output "eventhub_primary_connection_string" {
 
 #
 # Configure the Azure Stream Analytics jobs that will get and process
-# messages from the Azure Event Hubs.
+# messages from the Azure Event Hubs. 
 #
 resource "azurerm_stream_analytics_job" "poc_asa_job" {
   name                                     = "TwitterStoreProjectedFieldsJob"
@@ -201,11 +201,22 @@ resource "azurerm_sql_firewall_rule" "poc_sql_firewall_rule" {
   end_ip_address      = "0.0.0.0"
 }
 
-resource "azurerm_sql_database" "poc_sqldb" {
+#resource "azurerm_sql_database" "poc_sqldb" {
+#  name                = "tweetsdb"
+#  resource_group_name = "${azurerm_resource_group.poc_rg.name}"
+#  location            = "${azurerm_resource_group.poc_rg.location}"
+#  server_name         = "${azurerm_sql_server.poc_sql_server.name}"
+#}
+
+resource "azurerm_sql_database" "poc_sql_dwh" {
   name                = "tweetsdb"
   resource_group_name = "${azurerm_resource_group.poc_rg.name}"
   location            = "${azurerm_resource_group.poc_rg.location}"
   server_name         = "${azurerm_sql_server.poc_sql_server.name}"
+  create_mode         = "Default"
+  edition             = "DataWarehouse"
+  requested_service_objective_name = "DW1000c"
+  collation           = "SQL_LATIN1_GENERAL_CP1_CI_AS"
 }
 
 output "sql_server_login" {

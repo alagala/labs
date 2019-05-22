@@ -3,7 +3,6 @@ package it.alagala.demo;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -80,18 +79,9 @@ public class TwitterClient {
         // Post each tweet to Azure Event Hubs
         //
         final String topic = config.getProperty(TwitterClient.KAFKA_TOPIC);
-        final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         while (!client.isDone()) {
             try {
-                JSONObject tweet = new JSONObject(queue.take());
-                
-                // Rename the property 'user' to 'author' in the JSON returned by Twitter.
-                //
-                tweet.put("author", tweet.getJSONObject("user"));
-                tweet.remove("user");
-                tweet.put("created_at", formatter.format(
-                    TwitterDateParser.parseTwitterUTC(tweet.getString("created_at"))
-                ));
+                JSONObject tweet = parseTweet(queue.take());
                 
                 // Partition by the author's ID.
                 //
@@ -118,6 +108,23 @@ public class TwitterClient {
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    private static JSONObject parseTweet(String rawTweet) throws JSONException, ParseException {
+        JSONObject tweet = new JSONObject(rawTweet);
+
+        // Rename the property 'user' to 'author' in the JSON returned by Twitter.
+        //
+        tweet.put("author", tweet.getJSONObject("user"));
+        tweet.remove("user");
+
+        // Represent the tweet's UTC date in a simpler date format.
+        //
+        tweet.put("created_at", formatter.format(
+            TwitterDateParser.parseTwitterUTC(tweet.getString("created_at"))
+        ));
+
+        return tweet;
     }
 
     private static void publishTweet(Producer<Long, String> producer, String topic, Long partitionKey, JSONObject tweet) throws JSONException {
@@ -179,6 +186,8 @@ public class TwitterClient {
     private static final String TWITTER_SECRET = "twitter.access.token.secret";
     private static final String TWITTER_TRACK_TERMS = "twitter.track.terms";
     private static final String KAFKA_TOPIC = "kafka.topic";
+
+    private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public static final class TwitterDateParser {
 
