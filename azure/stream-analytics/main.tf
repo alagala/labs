@@ -154,11 +154,21 @@ resource "azurerm_stream_analytics_job" "poc_asa_job" {
   streaming_units                          = 6
 
   transformation_query = <<QUERY
-    SELECT id, created_at, text AS tweet, source, author.id AS user_id, author.name AS user_name, author.screen_name AS user_screen_name
-    INTO [sqldb-stream-output]
-    FROM [eventhub-stream-input]
-    PARTITION BY PartitionId
-    TIMESTAMP BY created_at
+    WITH AllTweets AS (
+      SELECT
+          id,
+          created_at,
+          text AS tweet,
+          source,
+          author.id AS user_id,
+          author.name AS user_name,
+          author.screen_name AS user_screen_name
+      FROM [eventhub-stream-input]
+      PARTITION BY PartitionId
+      TIMESTAMP BY created_at
+  )
+  SELECT * INTO [sqldb-stream-output] FROM AllTweets
+  SELECT * INTO [powerbi-stream-output] FROM AllTweets
 QUERY
 }
 
