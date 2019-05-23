@@ -6,8 +6,24 @@ variable "project_location" {
   default = "southeastasia"
 }
 
+variable "whitelist_ip_addresses" {
+  type    = "list"
+  default = ["127.0.0.1"]
+}
+
+variable "eventhub_min_throughput_units"        { default = 2 }
+variable "eventhub_max_throughput_units"        { default = 4 }
+variable "eventhub_num_of_partitions"           { default = 4 }
+variable "eventhub_message_retention_in_days"   { default = 7 }
+variable "eventhub_capture_interval_in_seconds" { default = 300 }
+variable "eventhub_capture_size_limit_in_bytes" { default = 33554432 }
+variable "eventhub_capture_skip_empty_archives" { default = false }
+variable "streaming_units"                      { default = 6 }
+variable "streaming_events_late_arrival_max_delay_in_seconds" { default = 60 }
+variable "streaming_events_out_of_order_max_delay_in_seconds" { default = 50 } 
+
 #
-# Configure the Microsoft Azure Provider.
+# Configure the Microsoft Azurewhitelist_ip_addresses Provider.
 #
 provider "azurerm" {
   # This AzureRM Provider is configured to authenticate to Azure
@@ -59,6 +75,7 @@ resource "azurerm_storage_account" "poc_storage_account" {
 
   network_rules {
     bypass                 = ["AzureServices"]
+    ip_rules               = "${var.whitelist_ip_addresses}"
   }
 }
 
@@ -77,9 +94,9 @@ resource "azurerm_eventhub_namespace" "poc_eh_ns" {
   location                 = "${azurerm_resource_group.poc_rg.location}"
   resource_group_name      = "${azurerm_resource_group.poc_rg.name}"
   sku                      = "Standard"
-  capacity                 = 2
+  capacity                 = "${var.eventhub_min_throughput_units}"
   auto_inflate_enabled     = true
-  maximum_throughput_units = 4
+  maximum_throughput_units = "${var.eventhub_max_throughput_units}"
   kafka_enabled            = true
 }
 
@@ -87,15 +104,15 @@ resource "azurerm_eventhub" "poc_eventhub" {
   name                     = "${var.project_name}-poc-tweets"
   namespace_name           = "${azurerm_eventhub_namespace.poc_eh_ns.name}"
   resource_group_name      = "${azurerm_resource_group.poc_rg.name}"
-  partition_count          = 4
-  message_retention        = 7
+  partition_count          = "${var.eventhub_num_of_partitions}"
+  message_retention        = "${var.eventhub_message_retention_in_days}"
   
   capture_description {
     enabled                = true
     encoding               = "AvroDeflate"
-    interval_in_seconds    = 300
-    size_limit_in_bytes    = 33554432
-    skip_empty_archives    = false
+    interval_in_seconds    = "${var.eventhub_capture_interval_in_seconds}"
+    size_limit_in_bytes    = "${var.eventhub_capture_size_limit_in_bytes}"
+    skip_empty_archives    = "${var.eventhub_capture_skip_empty_archives}"
 
     destination {
       name                 = "EventHubArchive.AzureBlockBlob"
@@ -147,11 +164,11 @@ resource "azurerm_stream_analytics_job" "poc_asa_job" {
   location                                 = "${azurerm_resource_group.poc_rg.location}"
   compatibility_level                      = "1.1"
   data_locale                              = "en-US"
-  events_late_arrival_max_delay_in_seconds = 60
-  events_out_of_order_max_delay_in_seconds = 50
+  events_late_arrival_max_delay_in_seconds = "${var.streaming_events_late_arrival_max_delay_in_seconds}"
+  events_out_of_order_max_delay_in_seconds = "${var.streaming_events_out_of_order_max_delay_in_seconds}"
   events_out_of_order_policy               = "Adjust"
   output_error_policy                      = "Drop"
-  streaming_units                          = 6
+  streaming_units                          = "${var.streaming_units}"
 
   transformation_query = <<QUERY
     WITH AllTweets AS (
