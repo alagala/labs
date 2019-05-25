@@ -287,3 +287,12 @@ Leave the application running until the end of this demo. You can interrupt it a
 1. Navigate to the dashboard you just created, and you should observe that the visual you just pinned is refreshing automatically as new tweets are streamed into the platform.
 
 _Congratulations! You have successfully setup an end-to-end, fully-managed real-time processing application on Microsoft Azure!_
+
+# Cleanup the allocated resources
+
+## Run Terraform to destroy the environment
+
+Run the following Terraform command to cleanup all allocated resources and destroy the environment:
+```shell
+$ terraform destroy
+```
