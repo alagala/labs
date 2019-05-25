@@ -150,6 +150,10 @@ resource "azurerm_eventhub_authorization_rule" "consumer_key" {
   manage              = false
 }
 
+output "eventhub_namespace_name" {
+  value = "${azurerm_eventhub_namespace.poc_eh_ns.name}"
+}
+
 output "eventhub_primary_connection_string" {
   value = "${azurerm_eventhub_authorization_rule.producer_key.primary_connection_string}"
 }
