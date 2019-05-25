@@ -1,6 +1,3 @@
-USE tweetsdb
-GO
-
 CREATE TABLE tweets
 (
     id BIGINT NOT NULL ,

@@ -188,7 +188,7 @@ resource "azurerm_stream_analytics_job" "poc_asa_job" {
       PARTITION BY PartitionId
       TIMESTAMP BY created_at
   )
-  SELECT * INTO [sqldb-stream-output] FROM AllTweets
+  SELECT * INTO [sqldwh-stream-output] FROM AllTweets
   SELECT * INTO [powerbi-stream-output] FROM AllTweets
 QUERY
 }
@@ -232,13 +232,6 @@ resource "azurerm_sql_firewall_rule" "poc_sql_firewall_rule" {
   end_ip_address      = "0.0.0.0"
 }
 
-#resource "azurerm_sql_database" "poc_sqldb" {
-#  name                = "tweetsdb"
-#  resource_group_name = "${azurerm_resource_group.poc_rg.name}"
-#  location            = "${azurerm_resource_group.poc_rg.location}"
-#  server_name         = "${azurerm_sql_server.poc_sql_server.name}"
-#}
-
 resource "azurerm_sql_database" "poc_sql_dwh" {
   name                = "tweetsdb"
   resource_group_name = "${azurerm_resource_group.poc_rg.name}"
@@ -248,6 +241,10 @@ resource "azurerm_sql_database" "poc_sql_dwh" {
   edition             = "DataWarehouse"
   requested_service_objective_name = "DW1000c"
   collation           = "SQL_LATIN1_GENERAL_CP1_CI_AS"
+}
+
+output "sql_server_name" {
+  value = "${azurerm_sql_server.poc_sql_server.name}"
 }
 
 output "sql_server_login" {

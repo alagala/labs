@@ -6,7 +6,7 @@ project_location       = "southeastasia"
 # The indicated IP addresses are used to set the Storage firewall rules
 # for the purpose of automatically creating the Blob container or
 # ADLS filesystem.
-whitelist_ip_addresses = ["167.220.255.180"]
+whitelist_ip_addresses = ["116.87.151.238"]
 
 # Configure Azure Event Hubs properties
 eventhub_min_throughput_units        = 2
