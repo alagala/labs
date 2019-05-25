@@ -105,7 +105,7 @@ When the execution of the Terraform plan has completed (expect about 10-15 minut
 
 1. In the left pane, select **Resource groups**. If you don't see the service listed, select **All services**, and then select **Resource groups**.
 
-1. You should see a resource group named `<PROJECT_NAME>-poc-rg` (eg. `graph-poc-rg`).
+1. You should see a resource group named `<PROJECT_NAME>-poc-rg` (eg. `streaming-poc-rg`).
 
 1. Click on it and observe that the following services have been created:
    - `sqlserver<#>`: the **SQL Server endpoint**, used to connect to the SQL Data Warehouse.
@@ -135,25 +135,33 @@ $ terraform output sql_server_password
 Compile and run the provided sample Twitter client application, in order to test and verify that environment is correctly setup and integrated end-to-end. After cloning the repository:
 
 1. Configure the Kafka producer properties:
-   - Rename the `src/main/producer.config.TEMPLATE` file into `src/main/producer.config`
+
+   - Rename the `src/main/producer.config.TEMPLATE` file into `src/main/producer.config`:
+
      ```shell
      $ cp src/main/resources/producer.config.TEMPLATE src/main/resources/producer.config
      ```
+   
    - You need to indicate the Kafka endpoint that the client application should connect to, and the Shared Access Signature (SAS) to be used for authentication. Therefore, in the new `producer.config` file, replace:
      - `{YOUR.EVENTHUBS.NAMESPACE}` with the **eventhub_namespace_name** value that you had obtained from Terraform.
      - `{YOUR.EVENTHUBS.CONNECTION.STRING}` with the **eventhub_primary_connection_string** value.
 
 1. Configure the Twitter app credentials and other properties:
-   - Rename the `src/main/app.config.TEMPLATE` file into `src/main/app.config`
+
+   - Rename the `src/main/app.config.TEMPLATE` file into `src/main/app.config`:
+
      ```shell
      $ cp src/main/resources/app.config.TEMPLATE src/main/resources/app.config
      ```
+
    - In the new `app.config` file, replace the following values with the keys and tokens of the Twitter app you have registered (see the [Prerequisites](#Prerequisites) section):
      - `{YOUR.TWITTER.CONSUMER.KEY}`
      - `{YOUR.TWITTER.CONSUMER.SECRET}`
      - `{YOUR.TWITTER.ACCESS.TOKEN}`
      - `{YOUR.TWITTER.ACCESS.TOKEN.SECRET}`
+
    - You can also modify the value of the `twitter.track.terms` property to filter tweets that match a different set of keywords. You can provide a list of comma-separated keywords of your choice.
+   
      > **Note**: the `kafka.topic` value corresponds to the name of the Event Hub, which in this case is preconfigured by the Terraform script. Each Event Hub corresponds, conceptually, to a _topic_ in Kafka (whereas an Event Hubs _namespace_ corresponds to a _cluster_ in Kafka). A Kafka and Azure Event Hubs conceptual mapping can be found [here](https://github.com/MicrosoftDocs/azure-docs/blob/master/articles/event-hubs/event-hubs-for-kafka-ecosystem-overview.md).
 
 After you have correctly configured the properties in the `producer.config` and `app.config` files, run the Twitter client application by executing the following commands:
@@ -166,6 +174,12 @@ $ mvn exec:java
 From the output, you should be able to verify that the client application can successfully connect to Azure Event Hubs through the Kafka Protocol and starts sending it all tweets as they are received from Twitter.
 
 # Create a table in the Azure SQL Data Warehouse
+
+Refer to the **sql_server_login** and **sql_server_password** values that were output by Terraform and configure your favourite IDE or tool to connect to Azure SQL Data Warehouse using those credentials.
+
+Once connected, execute the queries provided in the file `tweets.sql` to create the `tweets` table.
+
+This is the table that will be used to store the tweets that are being published to Azure Event Hubs and processed by the Azure Stream Analytics job.
 
 # Configure and run the Azure Stream Analytics job
 
