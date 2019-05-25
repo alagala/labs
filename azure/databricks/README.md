@@ -76,7 +76,7 @@ $ export ARM_TENANT_ID=<TENANT>
 
 ## Run Terraform to create the environment
 
-Modify the project file `poc.tfvars` to enter the values that are right for the deploymnent of the environment in your Azure subscription:
+Modify the project file `poc.tfvars` to enter the values that are right for the deployment of the environment in your Azure subscription:
 ```
 project_name              = <PROJECT_NAME>
 project_location          = <AZURE_REGION_TO_DEPLOY_THE_PROJECT>
@@ -88,6 +88,7 @@ adb_private_subnet_prefix = <DATABRICKS_PRIVATE_SUBNET_ADDRESS_RANGE>
 
 Run Terraform:
 ```shell
+$ terraform init
 $ terraform apply -var-file=poc.tfvars
 ```
 
