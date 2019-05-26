@@ -290,6 +290,14 @@ _Congratulations! You have successfully setup an end-to-end, fully-managed real-
 
 # Cleanup the allocated resources
 
+## Stop the Stream Analytics job
+
+1. Navigate to the Stream Analytics job (`TwitterStoreProjectedFieldsJob`), then select **Overview** on the left-hand menu.
+
+1. Click on the **Stop** button to stop the job.
+
+1. Wait a few moments, until you receive a notification in the Azure portal stating that the job was successfully stopped.
+
 ## Run Terraform to destroy the environment
 
 Run the following Terraform command to cleanup all allocated resources and destroy the environment:
