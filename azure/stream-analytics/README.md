@@ -136,7 +136,7 @@ Compile and run the provided sample Twitter client application, in order to test
 
 1. Configure the Kafka producer properties:
 
-   - Rename the `src/main/producer.config.TEMPLATE` file into `src/main/producer.config`:
+   - Rename the `src/main/resources/producer.config.TEMPLATE` file into `src/main/resources/producer.config`:
 
      ```shell
      $ cp src/main/resources/producer.config.TEMPLATE src/main/resources/producer.config
@@ -148,7 +148,7 @@ Compile and run the provided sample Twitter client application, in order to test
 
 1. Configure the Twitter app credentials and other properties:
 
-   - Rename the `src/main/app.config.TEMPLATE` file into `src/main/app.config`:
+   - Rename the `src/main/resources/app.config.TEMPLATE` file into `src/main/resources/app.config`:
 
      ```shell
      $ cp src/main/resources/app.config.TEMPLATE src/main/resources/app.config
