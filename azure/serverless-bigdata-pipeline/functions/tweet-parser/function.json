@@ -1,0 +1,22 @@
+{
+    "scriptFile": "__init__.py",
+    "bindings": [
+      {
+        "type": "eventHubTrigger",
+        "name": "event",
+        "direction": "in",
+        "eventHubName": "tweets-raw",
+        "connection": "TWEETS_RAW_EVENTHUB_CONNECTION_STRING",
+        "cardinality": "many",
+        "consumerGroup": "FunctionConsumerGroup"
+      },
+      {
+        "type": "eventHub",
+        "name": "$return",
+        "direction": "out",
+        "eventHubName": "tweets-processed",
+        "connection": "TWEETS_PROCESSED_EVENTHUB_CONNECTION_STRING"
+      }
+    ]
+  }
+  

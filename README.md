@@ -16,6 +16,10 @@ Here is a summary of the labs currently provided:
     - **SQL Data Warehouse**, for the storage and analysis of big data volumes
     - **Power BI**, for business intelligence and data visualization
 
+  - [Serverless real-time data ingestion and processing with Microsoft Azure Event Hubs and Azure Functions: hands-on lab](azure/serverless-bigdata-pipeline), demonstrating the use of:
+    - **Event Hubs** exposed as an [Apache Kafka](https://kafka.apache.org/) cluster, for ingestion of streaming data and for storing batches of streaming to Blob storage
+    - **Functions**, for serverless and scalable processing of streaming data
+
   - [Graph processing with Azure Databricks and Cosmos DB: hands-on lab](azure/cosmosdb/graph), demonstrating the use of:
     - **Cosmos DB** with Gremlin APIs, for storing and searching graphs
     - **Azure Databricks**, for graph analytics
