@@ -179,6 +179,11 @@ Create a Python 3.6 environment with Conda, then test the provided Azure Functio
 $ cd functions
 $ conda create -p .venv/functions python=3.6
 $ conda activate .venv/functions
+$ pip install -r requirements.txt
+```
+
+You can test the function locally by entering:
+```shell
 $ func host start
 ```
 
